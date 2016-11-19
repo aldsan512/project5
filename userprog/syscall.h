@@ -17,4 +17,8 @@ void seek (int fd, unsigned position);
 unsigned tell (int fd);
 void close (int fd);
 bool valid_pointer(void* ptr, struct intr_frame* f);
+bool chdir (const char *dir);
+bool mkdir (const char *dir);
+bool isdir (int fd);
+int inumber (int fd);
 #endif /* userprog/syscall.h */
