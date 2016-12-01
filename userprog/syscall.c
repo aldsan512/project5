@@ -9,9 +9,11 @@
 #include "userprog/pagedir.h"
 #include "threads/synch.h"
 #include "userprog/process.h"
+#include "userprog/syscall.h"
 #include "devices/input.h"
 #include "devices/shutdown.h"
 #include <string.h>
+#include "filesys/directory.h"
 #define EOF -1
 
 static struct lock l;
@@ -273,13 +275,102 @@ void close (int fd) {
 /* Changes the current working directory of the process to dir, which may be relative or absolute. 
 Returns true if successful, false on failure. */
 bool chdir (const char *dir){
+	int i=0;
+	if(dir[i]==NULL){return false;}
+	//moving a directory that is inside our current directory//
+	struct thread* t= thread_current();
+	struct dir* currentDir=NULL;
+	if(dir[i]!='/'){
+		currentDir=t->currentDir;
+	}
+	//moving to the root first and then look for directory//
+	else {
+		currentDir=dir_open_root();
+	}
+	char* file =(char)malloc(sizeof(char)*strlen(dir));
+	struct inode* currentInode;
+	int k=0;
+	bool finalDir=false;
+	while(dir[i]!=NULL){
+		if(dir[i]=='.' && dir[i+1]=='.'){
+				i=i+3;
+				file[0]='.';
+				file[1]='.';
+				dir_lookup (currentDir, file,&currentInode);
+				if(currentInode==NULL){return false;}
+				currentDir=dir_open(currentInode);
+				if(currentDir==NULL){return false;}
+
+		}
+		else if (dir[i]=='/'){
+			if(k==0){
+				file[k]=0;
+				dir_lookup (currentDir, file,&currentInode);
+				if(currentInode==NULL){return false;}
+				currentDir=dir_open(currentInode);
+				if(currentDir==NULL){return false;}
+				k=0;
+				finalDir=false;
+			}	
+			i++;
+		}
+		else{
+			finalDir=true;
+			file[k]=dir[i];
+			i++;
+			k++;
+		}	
+	}
+	if(finalDir==true){
+		dir_lookup (currentDir, file,&currentInode);
+		if(currentInode==NULL){return false;}
+		currentDir=dir_open(currentInode);
+		if(currentDir==NULL){return false;}
+	}
+	t->currentDir=currentDir;
+	return true;
 
 }
 /*Creates the directory named dir, which may be relative or absolute. Returns true if successful,
  false on failure. Fails if dir already exists or if any directory name in dir, besides the last,
   does not already exist. That is, mkdir("/a/b/c") succeeds only if "/a/b" already exists and "/a/b/c" does not. */
 bool mkdir (const char *dir){
+	char* file =(char)malloc(sizeof(char)*strlen(dir));
+	struct inode* currentInode;
+	int k=0;
+	bool finalDir=false;
+	while(dir[i]!=NULL){
+		if(dir[i]=='.' && dir[i+1]=='.'){
+				i=i+2;
+				file[0]='.';
+				file[1]='.';
+				dir_lookup (currentDir, file,&currentInode);
+				if(currentInode==NULL){return false;}
+				currentDir=dir_open(currentInode);
+				if(currentDir==NULL){return false;}
 
+		}
+		else if (dir[i]=='/'){
+			if(k==0){
+				file[k]=0;
+				dir_lookup (currentDir, file,&currentInode);
+				if(currentInode==NULL){return false;}
+				currentDir=dir_open(currentInode);
+				if(currentDir==NULL){return false;}
+				k=0;
+				finalDir=false;
+			}	
+			i++;
+		}
+		else{
+			file[k]=dir[i];
+			i++;
+			k++;
+		}
+
+	}
+	//create directory//
+*/
 }
 /*Reads a directory entry from file descriptor fd, which must represent a directory. If successful, stores the null-terminated
 file name in name, which must have room for READDIR_MAX_LEN + 1 bytes, and returns true. If no entries are left in the directory, returns false.
@@ -297,7 +388,7 @@ bool readdir (int fd, char *name){
   An inode number persistently identifies a file or directory. It is unique during the file's existence. In Pintos, 
   the sector number of the inode is suitable for use as an inode number.*/
 int inumber (int fd){
-	
+
 }
 
 
