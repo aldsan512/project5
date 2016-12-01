@@ -2,7 +2,7 @@
 
 # Path to GDB macros file.  Customize for your site.
 ###--- Change the path to point to your gdb-macros file ---### 
-GDBMACROS=/home/osboxes/project5/misc/gdb-macros
+GDBMACROS=/home/mike/project5/misc/gdb-macros
 
 # Choose correct GDB.
 if command -v i386-elf-gdb >/dev/null 2>&1; then
