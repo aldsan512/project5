@@ -335,6 +335,18 @@ bool chdir (const char *dir){
  false on failure. Fails if dir already exists or if any directory name in dir, besides the last,
   does not already exist. That is, mkdir("/a/b/c") succeeds only if "/a/b" already exists and "/a/b/c" does not. */
 bool mkdir (const char *dir){
+	int i=0;
+	if(dir[i]==NULL){return false;}
+	//moving a directory that is inside our current directory//
+	struct thread* t= thread_current();
+	struct dir* currentDir=NULL;
+	if(dir[i]!='/'){
+		currentDir=t->currentDir;
+	}
+	//moving to the root first and then look for directory//
+	else {
+		currentDir=dir_open_root();
+	}
 	char* file =(char)malloc(sizeof(char)*strlen(dir));
 	struct inode* currentInode;
 	int k=0;
@@ -370,7 +382,6 @@ bool mkdir (const char *dir){
 
 	}
 	//create directory//
-*/
 }
 /*Reads a directory entry from file descriptor fd, which must represent a directory. If successful, stores the null-terminated
 file name in name, which must have room for READDIR_MAX_LEN + 1 bytes, and returns true. If no entries are left in the directory, returns false.
@@ -537,6 +548,40 @@ syscall_handler (struct intr_frame *f) {
 			}
 			close (fd);
 			break;
+
+
+   		case SYS_CHDIR:
+   		//get dirname
+   			buffer = (char*) *sp;
+			if(!valid_pointer(buffer, f)){ 
+				exit(-1);
+				return; 
+			}
+			f->eax = chdir((const char *)buffer);
+			break;
+
+    	case SYS_MKDIR:
+   			buffer = (char*) *sp;
+			if(!valid_pointer(buffer, f)){ 
+				exit(-1);
+				return; 
+			}
+			f->eax = chdir((const char *)buffer);
+	/*
+    	case SYS_READDIR:
+			get_arg(f, &arg[0], 2);
+			check_valid_string((const void *) arg[1]);
+			arg[1] = user_to_kernel_ptr((const void *) arg[1]);
+			f->eax = readdir(arg[0], (char *) arg[1]);
+			break;
+    	case SYS_ISDIR:
+			get_arg(f, &arg[0], 1);
+			f->eax = isdir(arg[0]);
+			break;
+    	case SYS_INUMBER:
+			get_arg(f, &arg[0], 1);
+			f->eax = inumber(arg[0]);
+			break;*/
 		default:
 			f->eax = -1;
 			break;
