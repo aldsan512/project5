@@ -476,6 +476,7 @@ init_thread (struct thread *t, const char *name, int priority)
 //	t->wait_lock = (struct semaphore*) palloc_get_page(0);
 	sema_init(&t->dead_lock,0);
 	sema_init(&t->wait_lock,0);
+  t->currentDir=dir_open_root();
 t->magic = THREAD_MAGIC;
 
 

@@ -6,6 +6,8 @@
 #include "filesys/free-map.h"
 #include "filesys/inode.h"
 #include "filesys/directory.h"
+#include "threads/thread.h"
+#include "threads/malloc.h"
 
 /* Partition that contains the file system. */
 struct block *fs_device;
@@ -43,17 +45,65 @@ filesys_done (void)
    Fails if a file named NAME already exists,
    or if internal memory allocation fails. */
 bool
-filesys_create (const char *name, off_t initial_size) 
+filesys_create (const char *name, off_t initial_size, bool isDir) 
 {
   block_sector_t inode_sector = 0;
-  struct dir *dir = dir_open_root ();
-  bool success = (dir != NULL
+  //look for directory for the file//
+  int i=0;
+  if(name[i]==NULL){return false;}
+  //moving a directory that is inside our current directory//
+  struct thread* t= thread_current();
+  struct dir* currentDir=NULL;
+  if(name[i]!='/'){
+    currentDir=t->currentDir;
+  }
+  //moving to the root first and then look for directory//
+  else {
+    currentDir=dir_open_root();
+  }
+  char* file =(char*)malloc(sizeof(char)*strlen(name));
+  struct inode* currentInode;
+  int k=0;
+  bool finalDir=false;
+  while(name[i]!=NULL){
+    if(name[i]=='.' && name[i+1]=='.'){
+        i=i+2;
+        file[0]='.';
+        file[1]='.';
+        dir_lookup (currentDir, file,&currentInode);
+        if(currentInode==NULL){return false;}
+        currentDir=dir_open(currentInode);
+        if(currentDir==NULL){return false;}
+
+    }
+    else if (name[i]=='/'){
+      if(k==0){
+        file[k]=0;
+        dir_lookup (currentDir, file,&currentInode);
+        if(currentInode==NULL){return false;}
+        currentDir=dir_open(currentInode);
+        if(currentDir==NULL){return false;}
+        k=0;
+        finalDir=false;
+      } 
+      i++;
+    }
+    else{
+      file[k]=name[i];
+      i++;
+      k++;
+    }
+
+  }
+
+
+  bool success = (currentDir != NULL
                   && free_map_allocate (1, &inode_sector)
-                  && inode_create (inode_sector, initial_size)
-                  && dir_add (dir, name, inode_sector));
+                  && inode_create (inode_sector, initial_size,isDir)
+                  && dir_add (currentDir, file, inode_sector));
   if (!success && inode_sector != 0) 
     free_map_release (inode_sector, 1);
-  dir_close (dir);
+  dir_close (currentDir);
 
   return success;
 }
@@ -66,12 +116,58 @@ filesys_create (const char *name, off_t initial_size)
 struct file *
 filesys_open (const char *name)
 {
-  struct dir *dir = dir_open_root ();
+
+  int i=0;
+  if(name[i]==NULL){return false;}
+  //moving a directory that is inside our current directory//
+  struct thread* t= thread_current();
+  struct dir* currentDir=NULL;
+  if(name[i]!='/'){
+    currentDir=t->currentDir;
+  }
+  //moving to the root first and then look for directory//
+  else {
+    currentDir=dir_open_root();
+  }
+  char* file =(char*)malloc(sizeof(char)*strlen(name));
+  struct inode* currentInode;
+  int k=0;
+  bool finalDir=false;
+  while(name[i]!=NULL){
+    if(name[i]=='.' && name[i+1]=='.'){
+        i=i+2;
+        file[0]='.';
+        file[1]='.';
+        dir_lookup (currentDir, file,&currentInode);
+        if(currentInode==NULL){return false;}
+        currentDir=dir_open(currentInode);
+        if(currentDir==NULL){return false;}
+
+    }
+    else if (name[i]=='/'){
+      if(k==0){
+        file[k]=0;
+        dir_lookup (currentDir, file,&currentInode);
+        if(currentInode==NULL){return false;}
+        currentDir=dir_open(currentInode);
+        if(currentDir==NULL){return false;}
+        k=0;
+        finalDir=false;
+      } 
+      i++;
+    }
+    else{
+      file[k]=name[i];
+      i++;
+      k++;
+    }
+
+  }
   struct inode *inode = NULL;
 
-  if (dir != NULL)
-    dir_lookup (dir, name, &inode);
-  dir_close (dir);
+  if (currentDir != NULL)
+    dir_lookup (currentDir, name, &inode);
+  dir_close (currentDir);
 
   return file_open (inode);
 }
@@ -83,11 +179,59 @@ filesys_open (const char *name)
 bool
 filesys_remove (const char *name) 
 {
-  struct dir *dir = dir_open_root ();
-  bool success = dir != NULL && dir_remove (dir, name);
-  dir_close (dir); 
+  int i=0;
+  if(name[i]==NULL){return false;}
+  //moving a directory that is inside our current directory//
+  struct thread* t= thread_current();
+  struct dir* currentDir=NULL;
+  if(name[i]!='/'){
+    currentDir=t->currentDir;
+  }
+  //moving to the root first and then look for directory//
+  else {
+    currentDir=dir_open_root();
+  }
+  char* file =(char*)malloc(sizeof(char)*strlen(name));
+  struct inode* currentInode;
+  int k=0;
+  bool finalDir=false;
+  while(name[i]!=NULL){
+    if(name[i]=='.' && name[i+1]=='.'){
+        i=i+2;
+        file[0]='.';
+        file[1]='.';
+        dir_lookup (currentDir, file,&currentInode);
+        if(currentInode==NULL){return false;}
+        currentDir=dir_open(currentInode);
+        if(currentDir==NULL){return false;}
 
-  return success;
+    }
+    else if (name[i]=='/'){
+      if(k==0){
+        file[k]=0;
+        dir_lookup (currentDir, file,&currentInode);
+        if(currentInode==NULL){return false;}
+        currentDir=dir_open(currentInode);
+        if(currentDir==NULL){return false;}
+        k=0;
+        finalDir=false;
+      } 
+      i++;
+    }
+    else{
+      file[k]=name[i];
+      i++;
+      k++;
+    }
+
+  }
+  //can only remove dir if it is empty
+  if(currentDir->inode->numEntries==0){
+    bool success = currentDir != NULL && dir_remove (currentDir, file);
+    dir_close (currentDir); 
+    return success;
+  }
+  return false;
 }
 
 /* Formats the file system. */

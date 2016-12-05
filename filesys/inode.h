@@ -4,11 +4,43 @@
 #include <stdbool.h>
 #include "filesys/off_t.h"
 #include "devices/block.h"
+#include <list.h>
+#include "threads/synch.h"
+#define DIRECT_BLOCKS_COUNT 122  
+#define INDIRECT_BLOCKS_PER_SECTOR 128
+
+/* On-disk inode.
+   Must be exactly BLOCK_SECTOR_SIZE bytes long. */
+struct inode_disk
+  {
+    block_sector_t direct_blocks [DIRECT_BLOCKS_COUNT];               /* First data sector. */
+    block_sector_t indirect_block;  //sector number of block holding inode_indirect_block_sector
+    block_sector_t doubly_indirect_block;  //sector number of block holding inode_indirect_block_sector which points to yet more of them
+    off_t length;                       /* File size in bytes. */
+    bool isdir;
+    block_sector_t parent;  //block holding parent directory, needed???
+    unsigned magic;                     /* Magic number. */
+  };
+
+  struct inode 
+  {
+    struct list_elem elem;              /* Element in inode list. */
+    block_sector_t sector;              /* Sector number of disk location. */
+    int open_cnt;                       /* Number of openers. */
+    bool removed;                       /* True if deleted, false otherwise. */
+    int deny_write_cnt;                 /* 0: writes ok, >0: deny writes. */
+    struct inode_disk data;             /* Inode content. */
+    
+    //off_t read_length;
+    bool isdir;
+    struct lock lock;    
+    int numEntries;
+  };
 
 struct bitmap;
 
 void inode_init (void);
-bool inode_create (block_sector_t, off_t);
+bool inode_create (block_sector_t, off_t,bool isDir);
 struct inode *inode_open (block_sector_t);
 struct inode *inode_reopen (struct inode *);
 block_sector_t inode_get_inumber (const struct inode *);

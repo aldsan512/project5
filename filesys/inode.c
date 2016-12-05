@@ -1,5 +1,4 @@
 #include "filesys/inode.h"
-#include <list.h>
 #include <debug.h>
 #include <round.h>
 #include <string.h>
@@ -10,21 +9,6 @@
 
 /* Identifies an inode. */
 #define INODE_MAGIC 0x494e4f44
-#define DIRECT_BLOCKS_COUNT 122  
-#define INDIRECT_BLOCKS_PER_SECTOR 128
-
-/* On-disk inode.
-   Must be exactly BLOCK_SECTOR_SIZE bytes long. */
-struct inode_disk
-  {
-    block_sector_t direct_blocks [DIRECT_BLOCKS_COUNT];               /* First data sector. */
-    block_sector_t indirect_block;  //sector number of block holding inode_indirect_block_sector
-    block_sector_t doubly_indirect_block;  //sector number of block holding inode_indirect_block_sector which points to yet more of them
-    off_t length;                       /* File size in bytes. */
-    bool isdir;
-    block_sector_t parent;  //block holding parent directory, needed???
-    unsigned magic;                     /* Magic number. */
-  };
 
  //indirect_index points to one of these which points to data blocks
  //double_indirect_index points to one of these which points to 128 more of them which each point to data blocks
@@ -82,18 +66,6 @@ bytes_to_sectors (off_t size)
 {
   return DIV_ROUND_UP (size, BLOCK_SECTOR_SIZE);
 }
-
-/* In-memory inode. */
-struct inode 
-  {
-    struct list_elem elem;              /* Element in inode list. */
-    block_sector_t sector;              /* Sector number of disk location. */
-    int open_cnt;                       /* Number of openers. */
-    bool removed;                       /* True if deleted, false otherwise. */
-    int deny_write_cnt;                 /* 0: writes ok, >0: deny writes. */
-    struct inode_disk data;             /* Inode content. */
-    struct lock lock;    
-  };
 
 /* Returns the block device sector that contains byte offset POS
    within INODE.
@@ -256,7 +228,7 @@ bool inode_dealloc(struct inode* inode){
 }
 
 bool
-inode_create (block_sector_t sector, off_t length)
+inode_create (block_sector_t sector, off_t length,bool isDir)
 {
   struct inode_disk *disk_inode = NULL;
   bool success = false;
