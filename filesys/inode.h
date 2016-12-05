@@ -4,6 +4,33 @@
 #include <stdbool.h>
 #include "filesys/off_t.h"
 #include "devices/block.h"
+#include <list.h>
+#include "threads/synch.h"
+#define INODE_BLOCK_PTRS 124   //???z
+struct inode_disk
+  {
+    block_sector_t ptr[INODE_BLOCK_PTRS];               /* First data sector. */
+    block_sector_t indirect_index;
+    block_sector_t  double_indirect_index;
+    off_t length;                       /* File size in bytes. */
+    unsigned magic;                     /* Magic number. */
+  };
+
+  struct inode 
+  {
+    struct list_elem elem;              /* Element in inode list. */
+    block_sector_t sector;              /* Sector number of disk location. */
+    int open_cnt;                       /* Number of openers. */
+    bool removed;                       /* True if deleted, false otherwise. */
+    int deny_write_cnt;                 /* 0: writes ok, >0: deny writes. */
+    struct inode_disk data;             /* Inode content. */
+    
+    //off_t read_length;
+    bool isdir;
+    block_sector_t parent;  //block holding parent inode
+    struct lock lock;    
+    	int numEntries;
+  };
 
 struct bitmap;
 

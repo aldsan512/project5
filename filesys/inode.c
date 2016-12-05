@@ -1,5 +1,4 @@
 #include "filesys/inode.h"
-#include <list.h>
 #include <debug.h>
 #include <round.h>
 #include <string.h>
@@ -9,18 +8,11 @@
 
 /* Identifies an inode. */
 #define INODE_MAGIC 0x494e4f44
-#define INODE_BLOCK_PTRS 124   //???z
+
 
 /* On-disk inode.
    Must be exactly BLOCK_SECTOR_SIZE bytes long. */
-struct inode_disk
-  {
-    block_sector_t ptr[INODE_BLOCK_PTRS];               /* First data sector. */
-    block_sector_t indirect_index;
-    block_sector_t  double_indirect_index;
-    off_t length;                       /* File size in bytes. */
-    unsigned magic;                     /* Magic number. */
-  };
+
 
 /* Returns the number of sectors to allocate for an inode SIZE
    bytes long. */
@@ -31,20 +23,7 @@ bytes_to_sectors (off_t size)
 }
 
 /* In-memory inode. */
-struct inode 
-  {
-    struct list_elem elem;              /* Element in inode list. */
-    block_sector_t sector;              /* Sector number of disk location. */
-    int open_cnt;                       /* Number of openers. */
-    bool removed;                       /* True if deleted, false otherwise. */
-    int deny_write_cnt;                 /* 0: writes ok, >0: deny writes. */
-    struct inode_disk data;             /* Inode content. */
-    
-    //off_t read_length;
-    bool isdir;
-    block_sector_t parent;  //block holding parent inode
-    struct lock lock;    
-  };
+
 
 /* Returns the block device sector that contains byte offset POS
    within INODE.

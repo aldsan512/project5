@@ -14,9 +14,12 @@
 #include "devices/shutdown.h"
 #include <string.h>
 #include "filesys/directory.h"
+#include "filesys/inode.h"
+#include "threads/malloc.h"
 #define EOF -1
 
 static struct lock l;
+
 
 bool valid_pointer(void* ptr, struct intr_frame* f){
 	struct thread* t = thread_current();
@@ -103,10 +106,10 @@ bool create (const char *file, unsigned initial_size) {
 //Deletes the file called file. Returns true if successful, false otherwise. A file may be removed regardless of whether it is open or closed, and removing an open file does not close it. See Removing an Open File, for details.
 bool remove (const char *file) {
 	lock_acquire(&l);
-	if(strlen(file)>14){
+	/*if(strlen(file)>14){
 		lock_release(&l);
 		return false;
-	}
+	}*/
 	bool ret = filesys_remove(file);
 	lock_release(&l);
 	return ret;
@@ -121,10 +124,10 @@ When a single file is opened more than once, whether by a single process or diff
 */
 int open (const char *file) {
 	lock_acquire(&l);
-	if(strlen(file)>14){
-		lock_release(&l);
-		return -1;
-	}
+	//if(strlen(file)>14){
+	//	lock_release(&l);
+	//	return -1;
+	//}
 	struct file* filePt = filesys_open(file);
 	if(filePt!=NULL){
 		struct thread* thread = thread_current();
@@ -264,9 +267,14 @@ void close (int fd) {
 		return;
 	}
 	thread->fileTable[fd]=NULL;
-
-	file_close(file);
-	lock_release(&l);
+	if(file->inode->isdir==false){
+		file_close(file);
+		lock_release(&l);
+	}
+	else{
+		dir_close((struct dir*)file);
+		lock_release(&l);
+	}
 }
 /* Changes the current working directory of the process to dir, which may be relative or absolute. 
 Returns true if successful, false on failure. */
@@ -283,7 +291,7 @@ bool chdir (const char *dir){
 	else {
 		currentDir=dir_open_root();
 	}
-	char* file =(char)malloc(sizeof(char)*strlen(dir));
+	char* file =(char*)malloc(sizeof(char)*strlen(dir));
 	struct inode* currentInode;
 	int k=0;
 	bool finalDir=false;
@@ -342,17 +350,41 @@ file name in name, which must have room for READDIR_MAX_LEN + 1 bytes, and retur
 at all or to be read multiple times. Otherwise, each directory entry should be read once, in any order.READDIR_MAX_LEN is defined in "lib/user/syscall.h". 
 If your file system supports longer file names than the basic file system, you should increase this value from the default of 14.*/
 bool readdir (int fd, char *name){
+	if(fd<=1){return false;}
+ 	lock_acquire(&l);
+ 	struct thread* t= thread_current();
+ 	struct dir* dir=(struct dir*)t->fileTable[fd];
+ 	if(dir->inode->isdir==false){return false;}
+ 	dir_readdir(dir,name);
+ 	//need to check if this is the correct way to check if the returned file is the same as the root or the current dir
+ 	if(strcmp(name,".")==0){return false;}
+ 	if(strcmp(name,".."==0)){return false;}
+
+
 
 }
 /*    Returns true if fd represents a directory, false if it represents an ordinary file.*/
  bool isdir (int fd){
+ 	if(fd<=1){return false;}
+ 	lock_acquire(&l);
+ 	struct thread* t= thread_current();
+ 	if (t->fileTable[fd]->inode->isdir==true){
+ 		lock_release(&l);
+ 		return true;
+ 	}
+ 	lock_release(&l);
+ 	return false;
+
 
  }
  /*Returns the inode number of the inode associated with fd, which may represent an ordinary file or a directory.
   An inode number persistently identifies a file or directory. It is unique during the file's existence. In Pintos, 
   the sector number of the inode is suitable for use as an inode number.*/
 int inumber (int fd){
-
+ 	if(fd<=1){return -1;}
+ 	lock_acquire(&l);
+ 	struct thread* t= thread_current();
+ 	return t->fileTable[fd]->inode->sector;
 }
 
 
