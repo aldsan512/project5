@@ -91,11 +91,11 @@ int wait (tid_t pid) {
 //Creates a new file called file initially initial_size bytes in size. Returns true if successful, false otherwise. Creating a new file does not open it: opening the new file is a separate operation which would require a open system call.
 bool create (const char *file, unsigned initial_size) {
 	lock_acquire(&l);
-	if(strlen(file)>14){
+	/*if(strlen(file)>14){
 		lock_release(&l);
 		return false;
-	} 
-	bool ret = filesys_create(file,initial_size);
+	}*/
+	bool ret = filesys_create(file,initial_size,false);
 	lock_release(&l);
 	return ret;
 }
@@ -226,10 +226,6 @@ int write (int fd, const void *buffer, unsigned size) {
 			lock_release(&l);
 			return -1;
 		}
-	//	if(file->deny_write) {
-	//		lock_release(&l);
-	//		return -1;
-	//	}
 		bytes=file_write(file,buffer,size);
 	}
 	lock_release(&l);
@@ -335,53 +331,10 @@ bool chdir (const char *dir){
  false on failure. Fails if dir already exists or if any directory name in dir, besides the last,
   does not already exist. That is, mkdir("/a/b/c") succeeds only if "/a/b" already exists and "/a/b/c" does not. */
 bool mkdir (const char *dir){
-	int i=0;
-	if(dir[i]==NULL){return false;}
-	//moving a directory that is inside our current directory//
-	struct thread* t= thread_current();
-	struct dir* currentDir=NULL;
-	if(dir[i]!='/'){
-		currentDir=t->currentDir;
-	}
-	//moving to the root first and then look for directory//
-	else {
-		currentDir=dir_open_root();
-	}
-	char* file =(char)malloc(sizeof(char)*strlen(dir));
-	struct inode* currentInode;
-	int k=0;
-	bool finalDir=false;
-	while(dir[i]!=NULL){
-		if(dir[i]=='.' && dir[i+1]=='.'){
-				i=i+2;
-				file[0]='.';
-				file[1]='.';
-				dir_lookup (currentDir, file,&currentInode);
-				if(currentInode==NULL){return false;}
-				currentDir=dir_open(currentInode);
-				if(currentDir==NULL){return false;}
-
-		}
-		else if (dir[i]=='/'){
-			if(k==0){
-				file[k]=0;
-				dir_lookup (currentDir, file,&currentInode);
-				if(currentInode==NULL){return false;}
-				currentDir=dir_open(currentInode);
-				if(currentDir==NULL){return false;}
-				k=0;
-				finalDir=false;
-			}	
-			i++;
-		}
-		else{
-			file[k]=dir[i];
-			i++;
-			k++;
-		}
-
-	}
-	//create directory//
+	lock_acquire(&l);
+	bool ret = filesys_create(dir,0,true);
+	lock_release(&l);
+	return ret;
 }
 /*Reads a directory entry from file descriptor fd, which must represent a directory. If successful, stores the null-terminated
 file name in name, which must have room for READDIR_MAX_LEN + 1 bytes, and returns true. If no entries are left in the directory, returns false.
