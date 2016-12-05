@@ -30,6 +30,7 @@ filesys_init (bool format)
     do_format ();
 
   free_map_open ();
+      thread_current()->currentDir=dir_open_root();
 }
 
 /* Shuts down the file system module, writing any unwritten data
