@@ -65,9 +65,6 @@ tid_t process_execute (const char *file_name) {
 	intr_set_level(INTR_OFF);
 	struct thread* childT=getThread(tid);
   //should this be here?? or after the sema??
-  if(parent->currentDir==NULL){
-    childT->currentDir=dir_open_root();
-  }
 	intr_set_level(INTR_ON);
 	if(childT==NULL){
 		return TID_ERROR;
@@ -75,6 +72,12 @@ tid_t process_execute (const char *file_name) {
 	if(childT->loadSuccess==false){
 		return TID_ERROR;
 	}
+  if(parent->currentDir==NULL){
+    childT->currentDir=dir_reopen(dir_open_root());
+  }
+  else{
+    childT->currentDir=dir_reopen(parent->currentDir);
+  }
 
 	parent = thread_current();
 	list_push_front(&(parent->children), &(childT->child));

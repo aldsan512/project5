@@ -55,7 +55,7 @@ filesys_create (const char *name, off_t initial_size, bool isDir)
   //moving a directory that is inside our current directory//
   struct thread* t= thread_current();
   struct dir* currentDir=NULL;
-  if(name[i]!='/'){
+  if(name[i]!='/' && t->currentDir!=NULL){
     currentDir=t->currentDir;
   }
   //moving to the root first and then look for directory//
@@ -106,10 +106,13 @@ filesys_create (const char *name, off_t initial_size, bool isDir)
   if (!success && inode_sector != 0) 
     free_map_release (inode_sector, 1);
   dir_close (currentDir);
+  bool dummy=true;
+  if(success==false){
+    dummy=false;
+  }
 
   return success;
 }
-
 /* Opens the file with the given NAME.
    Returns the new file if successful or a null pointer
    otherwise.
@@ -124,7 +127,7 @@ filesys_open (const char *name)
   //moving a directory that is inside our current directory//
   struct thread* t= thread_current();
   struct dir* currentDir=NULL;
-  if(name[i]!='/'){
+  if(name[i]!='/' && t->currentDir!=NULL){
     currentDir=t->currentDir;
   }
   //moving to the root first and then look for directory//
@@ -187,7 +190,7 @@ filesys_remove (const char *name)
   //moving a directory that is inside our current directory//
   struct thread* t= thread_current();
   struct dir* currentDir=NULL;
-  if(name[i]!='/'){
+  if(name[i]!='/' && t->currentDir!=NULL){
     currentDir=t->currentDir;
   }
   //moving to the root first and then look for directory//
