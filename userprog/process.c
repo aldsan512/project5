@@ -48,6 +48,7 @@ tid_t process_execute (const char *file_name) {
   /* Create a new thread to execute FILE_NAME. */
 //  	printf("%s is the file_name I am in process_execute\n",file_name);
     parentStruct* comm=(parentStruct*)palloc_get_page(0);
+    struct thread* parent = thread_current();
 	if(comm==NULL){
 		return TID_ERROR;//fix this
 	} 
@@ -63,6 +64,10 @@ tid_t process_execute (const char *file_name) {
 	}
 	intr_set_level(INTR_OFF);
 	struct thread* childT=getThread(tid);
+  //should this be here?? or after the sema??
+  if(parent->currentDir==NULL){
+    childT->currentDir=dir_open_root();
+  }
 	intr_set_level(INTR_ON);
 	if(childT==NULL){
 		return TID_ERROR;
@@ -70,13 +75,11 @@ tid_t process_execute (const char *file_name) {
 	if(childT->loadSuccess==false){
 		return TID_ERROR;
 	}
-	//sema_init(&childT->wait_lock, 0);
-	//sema_down(childT->wait_lock);
-	struct thread* parent = thread_current();
-	list_push_front(&(parent->children), &(childT->child)); //fix this
-//	printf("im about to return");
+
+	parent = thread_current();
+	list_push_front(&(parent->children), &(childT->child));
   	return tid;
-	// must I deallocate semaphore//
+
 }
 
 

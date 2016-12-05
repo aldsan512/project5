@@ -30,7 +30,7 @@ filesys_init (bool format)
     do_format ();
 
   free_map_open ();
-      thread_current()->currentDir=dir_open_root();
+   //   thread_current()->currentDir=dir_open_root();
 }
 
 /* Shuts down the file system module, writing any unwritten data
@@ -96,6 +96,7 @@ filesys_create (const char *name, off_t initial_size, bool isDir)
     }
 
   }
+  file[k]=0;
 
 
   bool success = (currentDir != NULL
@@ -164,10 +165,11 @@ filesys_open (const char *name)
     }
 
   }
+  file[k]=0;
   struct inode *inode = NULL;
 
   if (currentDir != NULL)
-    dir_lookup (currentDir, name, &inode);
+    dir_lookup (currentDir, file, &inode);
   dir_close (currentDir);
 
   return file_open (inode);
@@ -226,6 +228,7 @@ filesys_remove (const char *name)
     }
 
   }
+  file[k]=0;
   //can only remove dir if it is empty
   if(currentDir->inode->numEntries==0){
     bool success = currentDir != NULL && dir_remove (currentDir, file);
@@ -234,7 +237,6 @@ filesys_remove (const char *name)
   }
   return false;
 }
-
 /* Formats the file system. */
 static void
 do_format (void)

@@ -325,6 +325,7 @@ bool chdir (const char *dir){
 			k++;
 		}	
 	}
+	file[k]=0;
 	if(finalDir==true){
 		dir_lookup (currentDir, file,&currentInode);
 		if(currentInode==NULL){return false;}
