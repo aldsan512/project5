@@ -284,8 +284,12 @@ bool chdir (const char *dir){
 	//moving a directory that is inside our current directory//
 	struct thread* t= thread_current();
 	struct dir* currentDir=NULL;
-	if(dir[i]!='/'){
-		currentDir=t->currentDir;
+  	if(dir[i]!='/' && t->currentDir!=NULL){
+  	  currentDir=t->currentDir;
+  	}
+  	else if(dir[i]=='/'){
+  		currentDir=dir_open_root();
+		i++;
 	}
 	//moving to the root first and then look for directory//
 	else {
