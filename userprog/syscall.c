@@ -556,7 +556,7 @@ syscall_handler (struct intr_frame *f) {
 				exit(-1);
 				return; 
 			}
-			f->eax = chdir((const char *)buffer);
+			f->eax = mkdir((const char *)buffer);
 			break;
 
 	/*
