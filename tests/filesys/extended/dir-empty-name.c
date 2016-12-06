@@ -10,3 +10,4 @@ test_main (void)
 {
   CHECK (!mkdir (""), "mkdir \"\" (must return false)");
 }
+ 

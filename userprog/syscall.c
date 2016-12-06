@@ -553,21 +553,31 @@ syscall_handler (struct intr_frame *f) {
 				return; 
 			}
 			f->eax = chdir((const char *)buffer);
+			break;
+
 	/*
     	case SYS_READDIR:
 			get_arg(f, &arg[0], 2);
 			check_valid_string((const void *) arg[1]);
 			arg[1] = user_to_kernel_ptr((const void *) arg[1]);
 			f->eax = readdir(arg[0], (char *) arg[1]);
-			break;
+			break;*/
     	case SYS_ISDIR:
-			get_arg(f, &arg[0], 1);
-			f->eax = isdir(arg[0]);
+    		fd=*sp;
+    		if(fd < 0 || fd > thread->fileTableSz){
+				f->eax = -1;
+				return;
+			}
+			isdir(fd);
 			break;
     	case SYS_INUMBER:
-			get_arg(f, &arg[0], 1);
-			f->eax = inumber(arg[0]);
-			break;*/
+			fd=*sp;
+    		if(fd < 0 || fd > thread->fileTableSz){
+				f->eax = -1;
+				return;
+			}
+			inumber(fd);
+			break;
 		default:
 			f->eax = -1;
 			break;
