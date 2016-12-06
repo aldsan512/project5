@@ -83,7 +83,6 @@ filesys_create (const char *name, off_t initial_size, bool isDir)
 
     }
     else if (name[i]=='/'){
-      if(k==0){
         file[k]=0;
         dir_lookup (currentDir, file,&currentInode);
         if(currentInode==NULL){return false;}
@@ -91,7 +90,6 @@ filesys_create (const char *name, off_t initial_size, bool isDir)
         if(currentDir==NULL){return false;}
         k=0;
         finalDir=false;
-      } 
       i++;
     }
     else{
@@ -156,7 +154,6 @@ filesys_open (const char *name)
 
     }
     else if (name[i]=='/'){
-      if(k==0){
         file[k]=0;
         dir_lookup (currentDir, file,&currentInode);
         if(currentInode==NULL){return false;}
@@ -164,7 +161,6 @@ filesys_open (const char *name)
         if(currentDir==NULL){return false;}
         k=0;
         finalDir=false;
-      } 
       i++;
     }
     else{
@@ -223,7 +219,6 @@ filesys_remove (const char *name)
 
     }
     else if (name[i]=='/'){
-      if(k==0){
         file[k]=0;
         dir_lookup (currentDir, file,&currentInode);
         if(currentInode==NULL){return false;}
@@ -231,7 +226,6 @@ filesys_remove (const char *name)
         if(currentDir==NULL){return false;}
         k=0;
         finalDir=false;
-      } 
       i++;
     }
     else{
