@@ -62,6 +62,10 @@ filesys_create (const char *name, off_t initial_size, bool isDir)
   else if(name[i]=='/'){
     currentDir=dir_open_root();
     i++;
+    if(name[i]==NULL){
+      dir_close (currentDir);
+      return false;
+    }
   }
   //moving to the root first and then look for directory//
   else {
@@ -133,6 +137,9 @@ filesys_open (const char *name)
   else if(name[i]=='/'){
     currentDir=dir_open_root();
     i++;
+        if(name[i]==NULL){
+      return (struct file*)currentDir;
+    }
   }
   //moving to the root first and then look for directory//
   else {
@@ -198,6 +205,10 @@ filesys_remove (const char *name)
   else if(name[i]=='/'){
     currentDir=dir_open_root();
     i++;
+          if(name[i]==NULL){
+      dir_close (currentDir);
+      return false;
+    }
   }
   //moving to the root first and then look for directory//
   else {

@@ -225,6 +225,10 @@ int write (int fd, const void *buffer, unsigned size) {
 			return -1;
 		}
 		struct file* file= thread->fileTable[fd];
+		if(file->inode->data.isdir==true){
+			lock_release(&l);
+			return -1;
+		}
 		if(file==NULL){
 			lock_release(&l);
 			return -1;
@@ -557,13 +561,20 @@ syscall_handler (struct intr_frame *f) {
 			f->eax = mkdir((const char *)buffer);
 			break;
 
-	/*
     	case SYS_READDIR:
-			get_arg(f, &arg[0], 2);
-			check_valid_string((const void *) arg[1]);
-			arg[1] = user_to_kernel_ptr((const void *) arg[1]);
-			f->eax = readdir(arg[0], (char *) arg[1]);
-			break;*/
+			fd = *sp;
+			if(fd < 0 || fd > thread->fileTableSz){
+				f->eax = -1;
+				return;
+			}
+			sp++;
+			buffer = (char*) *sp;
+			if(!valid_pointer(buffer, f)){ 
+				exit(-1);
+				return; 
+			}
+			f->eax = (uint32_t) readdir (fd,(const char*)buffer);
+			break;
     	case SYS_ISDIR:
     		fd=*sp;
     		if(fd < 0 || fd > thread->fileTableSz){
