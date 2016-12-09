@@ -112,7 +112,7 @@ filesys_create (const char *name, off_t initial_size, bool isDir)
                   && dir_add (currentDir, file, inode_sector));
   if (!success && inode_sector != 0) 
     free_map_release (inode_sector, 1);
-  dir_close (currentDir);
+  //dir_close (currentDir);
   int dummy=0;
 
   return success;
@@ -145,7 +145,7 @@ filesys_open (const char *name)
   else {
     currentDir=dir_open_root();
   }
-  char* file =(char*)malloc(sizeof(char)*strlen(name));
+  char* file =(char*)calloc(1, sizeof(char)*strlen(name));
   struct inode* currentInode;
   int k=0;
   bool finalDir=false;
@@ -182,7 +182,7 @@ filesys_open (const char *name)
 
   if (currentDir != NULL)
     dir_lookup (currentDir, file, &inode);
-  dir_close (currentDir);
+  //dir_close (currentDir);
 
   return file_open (inode);
 }

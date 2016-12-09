@@ -271,7 +271,7 @@ void close (int fd) {
 		return;
 	}
 	thread->fileTable[fd]=NULL;
-	if(file->inode->isdir==false){
+	if(file->inode->data.isdir==false){
 		file_close(file);
 		lock_release(&l);
 	}

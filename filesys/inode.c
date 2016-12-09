@@ -246,7 +246,7 @@ inode_create (block_sector_t sector, off_t length,bool isDir)
       disk_inode->length = length;
       disk_inode->magic = INODE_MAGIC;
           //aldair wrote this
-          disk_inode->isdir=isDir;
+      disk_inode->isdir=isDir;
       //shouldn't allocate all sectors at once, but rather 1 at a time
       if (inode_alloc(disk_inode, length))
      // if (free_map_allocate (sectors, &disk_inode->start)) 
