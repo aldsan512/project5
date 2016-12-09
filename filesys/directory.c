@@ -206,7 +206,7 @@ dir_remove (struct dir *dir, const char *name)
     goto done;
 
   //if inode is for parent directory don't remove
-  if(thread_current()->currentDir->inode->data.parent == inode->sector){
+  if(thread_current()->currentDir != NULL && thread_current()->currentDir->inode->data.parent == inode->sector){
     goto done;
   }
   /* Remove inode. */
