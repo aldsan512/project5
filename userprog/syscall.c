@@ -333,12 +333,12 @@ bool chdir (const char *dir){
 	}
 	file[k]=0;
 	if(finalDir==true){
-		dir_lookup (currentDir, file,&currentInode);
+		if(!dir_lookup (currentDir, file,&currentInode)) return false;
 		if(currentInode==NULL){return false;}
 		currentDir=dir_open(currentInode);
 		if(currentDir==NULL){return false;}
 	}
-	t->currentDir=currentDir;
+	t->currentDir=currentDir; 	//should be reopen???
 	return true;
 
 }
@@ -361,11 +361,13 @@ bool readdir (int fd, char *name){
  	lock_acquire(&l);
  	struct thread* t= thread_current();
  	struct dir* dir=(struct dir*)t->fileTable[fd];
- 	if(dir->inode->isdir==false){return false;}
- 	dir_readdir(dir,name);
+ 	if(dir->inode->data.isdir==false){return false;}
+ 	bool ret = dir_readdir(dir,name);
+ 	lock_release(&l);
+ 	return ret;
  	//need to check if this is the correct way to check if the returned file is the same as the root or the current dir
- 	if(strcmp(name,".")==0){return false;}
- 	if(strcmp(name,".."==0)){return false;}
+ 	//if(strcmp(name,".")==0){return false;}
+ 	//if(strcmp(name,".."==0)){return false;}
 
 
 
@@ -375,7 +377,7 @@ bool readdir (int fd, char *name){
  	if(fd<=1){return false;}
  	lock_acquire(&l);
  	struct thread* t= thread_current();
- 	if (t->fileTable[fd]->inode->isdir==true){
+ 	if (t->fileTable[fd]->inode->data.isdir==true){
  		lock_release(&l);
  		return true;
  	}
@@ -391,7 +393,9 @@ int inumber (int fd){
  	if(fd<=1){return -1;}
  	lock_acquire(&l);
  	struct thread* t= thread_current();
- 	return t->fileTable[fd]->inode->sector;
+ 	int ret = t->fileTable[fd]->inode->sector;
+ 	lock_release(&l);
+ 	return ret;
 }
 
 
@@ -581,7 +585,7 @@ syscall_handler (struct intr_frame *f) {
 				f->eax = -1;
 				return;
 			}
-			isdir(fd);
+			f->eax = isdir(fd);
 			break;
     	case SYS_INUMBER:
 			fd=*sp;
@@ -589,7 +593,7 @@ syscall_handler (struct intr_frame *f) {
 				f->eax = -1;
 				return;
 			}
-			inumber(fd);
+			f->eax = inumber(fd);
 			break;
 		default:
 			f->eax = -1;

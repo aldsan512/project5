@@ -5,6 +5,7 @@
 #include "filesys/filesys.h"
 #include "filesys/inode.h"
 #include "threads/malloc.h"
+#include "threads/thread.h"
 
 /* A directory. */
 /* A single directory entry. */
@@ -164,6 +165,7 @@ dir_add (struct dir *dir, const char *name, block_sector_t inode_sector)
 
   /* Write slot. */
   e.in_use = true;
+  if(name[0] == '.') e.in_use = false;
   strlcpy (e.name, name, sizeof e.name);
   e.inode_sector = inode_sector;
   success = inode_write_at (dir->inode, &e, sizeof e, ofs) == sizeof e;
@@ -203,6 +205,10 @@ dir_remove (struct dir *dir, const char *name)
   if (inode_write_at (dir->inode, &e, sizeof e, ofs) != sizeof e) 
     goto done;
 
+  //if inode is for parent directory don't remove
+  if(thread_current()->currentDir->inode->data.parent == inode->sector){
+    goto done;
+  }
   /* Remove inode. */
   inode_remove (inode);
   success = true;

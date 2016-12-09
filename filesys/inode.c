@@ -6,6 +6,7 @@
 #include "filesys/filesys.h"
 #include "filesys/free-map.h"
 #include "threads/malloc.h"
+#include "threads/thread.h"
 
 /* Identifies an inode. */
 #define INODE_MAGIC 0x494e4f44
@@ -75,7 +76,7 @@ static block_sector_t
 byte_to_sector (const struct inode *inode, off_t pos) 
 {
   ASSERT (inode != NULL);
-  if (pos >= 0 && pos < inode->data.length)
+  if (pos >= 0 && pos <= inode->data.length)
     return index_to_sector(&inode->data, pos / BLOCK_SECTOR_SIZE);
   else
     return -1;
@@ -242,11 +243,16 @@ inode_create (block_sector_t sector, off_t length,bool isDir)
   disk_inode = calloc (1, sizeof *disk_inode);
   if (disk_inode != NULL)
     {
+     
       size_t sectors = bytes_to_sectors (length);
       disk_inode->length = length;
       disk_inode->magic = INODE_MAGIC;
           //aldair wrote this
       disk_inode->isdir=isDir;
+      struct thread* t = thread_current();
+      if(t->currentDir != NULL){
+        disk_inode->parent = t->currentDir->inode->sector;
+      }
       //shouldn't allocate all sectors at once, but rather 1 at a time
       if (inode_alloc(disk_inode, length))
      // if (free_map_allocate (sectors, &disk_inode->start)) 
@@ -302,6 +308,7 @@ inode_open (block_sector_t sector)
   inode->deny_write_cnt = 0;
   inode->removed = false;
   block_read (fs_device, inode->sector, &inode->data);
+  inode->isdir = inode->data.isdir;
   return inode;
 }
 

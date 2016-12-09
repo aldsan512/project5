@@ -106,10 +106,16 @@ filesys_create (const char *name, off_t initial_size, bool isDir)
   file[k]=0;
 
 
-  bool success = (currentDir != NULL
+  bool success = (currentDir != NULL && !currentDir->inode->removed
                   && free_map_allocate (1, &inode_sector)
                   && inode_create (inode_sector, initial_size,isDir)
                   && dir_add (currentDir, file, inode_sector));
+  if(isDir){
+    struct inode* inode = inode_open(inode_sector);
+    struct dir* dir = dir_open(inode);
+    dir_add(dir, ".", inode_sector);
+    dir_add(dir, "..", currentDir->inode->sector);
+  }
   if (!success && inode_sector != 0) 
     free_map_release (inode_sector, 1);
   //dir_close (currentDir);
@@ -247,11 +253,10 @@ filesys_remove (const char *name)
 
   }
   file[k]=0;
-  
+
   //had to remove this check to pass tests
   //not removing cwd here so not relevant
   //still need those checks somewhere though, just don't know where yet
-
   //can only remove dir if it is empty
     bool success = currentDir != NULL && dir_remove (currentDir, file);
     //dir_close (currentDir); 

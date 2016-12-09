@@ -18,7 +18,7 @@ struct inode_disk
     block_sector_t doubly_indirect_block;  //sector number of block holding inode_indirect_block_sector which points to yet more of them
     off_t length;                       /* File size in bytes. */
     bool isdir;
-    block_sector_t parent;  //block holding parent directory, needed???
+    block_sector_t parent;  //block holding parent directory
     unsigned magic;                     /* Magic number. */
   };
 
