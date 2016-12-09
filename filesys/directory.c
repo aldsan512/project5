@@ -178,6 +178,9 @@ dir_add (struct dir *dir, const char *name, block_sector_t inode_sector)
 bool
 dir_remove (struct dir *dir, const char *name) 
 {
+
+  //  if((file->inode->data.isDir && file->inode->numEntries == 0) || file->inode->data.isDir
+ // if(currentDir->inode->numEntries==0 ||){
   struct dir_entry e;
   struct inode *inode = NULL;
   bool success = false;
