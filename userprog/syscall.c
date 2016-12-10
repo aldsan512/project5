@@ -299,19 +299,24 @@ bool chdir (const char *dir){
 	else {
 		currentDir=dir_open_root();
 	}
-	char* file =(char*)malloc(sizeof(char)*strlen(dir));
+	char* file =(char*)calloc(sizeof(char), strlen(dir));
 	struct inode* currentInode;
 	int k=0;
 	bool finalDir=false;
 	while(dir[i]!=NULL){
 		if(dir[i]=='.' && dir[i+1]=='.'){
-				i=i+3;
+				i=i+2;
+				k+=3;
 				file[0]='.';
 				file[1]='.';
+				file[2] = NULL;
 				dir_lookup (currentDir, file,&currentInode);
 				if(currentInode==NULL){return false;}
 				currentDir=dir_open(currentInode);
 				if(currentDir==NULL){return false;}
+				if(dir[i+2] != '/'){
+					break;
+				}
 
 		}
 		else if (dir[i]=='/'){
@@ -339,6 +344,7 @@ bool chdir (const char *dir){
 		if(currentDir==NULL){return false;}
 	}
 	t->currentDir=currentDir; 	//should be reopen???
+	close(currentDir);
 	return true;
 
 }

@@ -71,7 +71,8 @@ filesys_create (const char *name, off_t initial_size, bool isDir)
   else {
     currentDir=dir_open_root();
   }
-  char* file =(char*)malloc(sizeof(char)*strlen(name));
+  //char* file =(char*)malloc(sizeof(char)*strlen(name));
+  char file[strlen(name)+1];
   struct inode* currentInode;
   int k=0;
   bool finalDir=false;
@@ -110,7 +111,7 @@ filesys_create (const char *name, off_t initial_size, bool isDir)
                   && free_map_allocate (1, &inode_sector)
                   && inode_create (inode_sector, initial_size,isDir)
                   && dir_add (currentDir, file, inode_sector));
-  if(isDir){
+  if(isDir && success){
     struct inode* inode = inode_open(inode_sector);
     struct dir* dir = dir_open(inode);
     dir_add(dir, ".", inode_sector);
@@ -120,7 +121,7 @@ filesys_create (const char *name, off_t initial_size, bool isDir)
     free_map_release (inode_sector, 1);
   //dir_close (currentDir);
   int dummy=0;
-
+  //free(file);
   return success;
 }
 /* Opens the file with the given NAME.
@@ -151,7 +152,8 @@ filesys_open (const char *name)
   else {
     currentDir=dir_open_root();
   }
-  char* file =(char*)calloc(1, sizeof(char)*strlen(name));
+  //char* file =(char*)calloc(1, sizeof(char)*strlen(name));
+  char file[strlen(name)+1];
   struct inode* currentInode;
   int k=0;
   bool finalDir=false;
@@ -161,17 +163,25 @@ filesys_open (const char *name)
         file[0]='.';
         file[1]='.';
         dir_lookup (currentDir, file,&currentInode);
-        if(currentInode==NULL){return false;}
+        if(currentInode==NULL){
+         // free(file);
+          return false;}
         currentDir=dir_open(currentInode);
-        if(currentDir==NULL){return false;}
+        if(currentDir==NULL){
+           //free(file);
+          return false;}
 
     }
     else if (name[i]=='/'){
         file[k]=0;
         dir_lookup (currentDir, file,&currentInode);
-        if(currentInode==NULL){return false;}
+        if(currentInode==NULL){
+          // free(file);
+          return false;}
         currentDir=dir_open(currentInode);
-        if(currentDir==NULL){return false;}
+        if(currentDir==NULL){
+           //free(file);
+          return false;}
         k=0;
         finalDir=false;
       i++;
@@ -189,7 +199,7 @@ filesys_open (const char *name)
   if (currentDir != NULL)
     dir_lookup (currentDir, file, &inode);
   //dir_close (currentDir);
-
+ // free(file);
   return file_open (inode);
 }
 
@@ -259,6 +269,7 @@ filesys_remove (const char *name)
   //still need those checks somewhere though, just don't know where yet
   //can only remove dir if it is empty
     bool success = currentDir != NULL && dir_remove (currentDir, file);
+    free(file);
     //dir_close (currentDir); 
     return success;
   //}
